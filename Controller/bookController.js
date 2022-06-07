@@ -20,7 +20,7 @@ const isValidObjectId = function (ObjectId) {
 
 const createBook = async function (req, res) {
     try {
-    
+
         let { title, ISBN, category, userId } = req.body;
 
         if (Object.keys(req.body).length === 0) {
@@ -75,15 +75,24 @@ const createBook = async function (req, res) {
 
 const getBooks = async function (req, res) {
     try {
-        if (req["roles"].indexOf("Viewer") != -1) {
+        let filterObj = {}
 
-            let userId = req["userId"];
+        if (req["roles"].indexOf('Viewer') != -1) {
 
-            let booksFromUser = await bookModel.find({ userId: userId })
-            res.status(200).send({ msg: "List Of Books", data: booksFromUser })
+            let userId = req['userId']
+            filterObj['author'] = userId
+
+            if (req.query.hasOwnProperty('old')) {
+                filterObj['createdAt'] = { $lt: Date.now() - 10 * 60 * 60 }
+            }
+            if (req.query.hasOwnProperty('new')) {
+                filterObj['createdAt'] = { $gt: Date.now() - 10 * 60 * 60 }
+            }
+
+            let booksFromUser = await bookModel.find(filterObj)
+            res.status(200).send({ message: `List Of Books`, Data: booksFromUser })
             return
         }
-
         if (req["roles"].indexOf("View_All") != -1) {
             let booksFromUser = await bookModel.find()
             res.status(200).send({ msg: "List Of Books", data: booksFromUser })
